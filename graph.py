@@ -7,8 +7,11 @@ class Graph():
     """ class is representing a graph
     """
     ## CLASS METHODS
-    def __init__(self, graph={}):
-        self.graph = graph
+    def __init__(self, graph=None):
+        if graph:
+            self.graph = graph
+        else:
+            self.graph = {}
         
     # used when printing an instance of this object
     def __str__(self):
