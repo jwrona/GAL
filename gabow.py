@@ -58,7 +58,7 @@ class Gabow():
 					yield component
 
 
-def strongly_connected_components_gabow(graph):
+def strongly_connected_components(graph):
 	""" Function implementing Gabow's algorithm for getting
 	    strongly connected components.
 	"""
@@ -67,6 +67,7 @@ def strongly_connected_components_gabow(graph):
 		""" Recursive function for founding
 		    strongly connected components of graph.
 		"""
+
 		global preorder_counter
 
 		preorder[node] = preorder_counter
@@ -93,6 +94,8 @@ def strongly_connected_components_gabow(graph):
 			yield component
 
 	#######################################################################
+	global preorder_counter
+
 	preorder_counter = 0
 	preorder = {}
 	stack_s = []
