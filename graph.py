@@ -1,4 +1,6 @@
 from pprint import pprint as pp
+import networkx as nx
+
 
 __author__ = "Tomas Varga"
 __email__  = "xvarga00@stud.fit.vutbr.cz"
@@ -61,3 +63,19 @@ class Graph():
     # add list of arcs
     def add_arcs(self, arcs):
         self.__add_arcs(arcs)
+
+
+
+def custom2nx(graph_input):
+    g = nx.DiGraph()
+    g.add_nodes_from(graph_input.keys())
+    for node, edges in graph_input.iteritems():
+        for edge in edges:
+            g.add_edge(node, edge)
+    return g
+
+def nx2custom(graph_input):
+    g = Graph()
+    g.add_nodes(graph_input.nodes())
+    g.add_arcs(graph_input.edges())
+    return g

@@ -1,15 +1,14 @@
 import networkx as nx
-from graph import Graph
+import graph as g
 import tarjan
 import gabow
-import graph_conv
 
 
 if __name__ == '__main__':
 	for i in range(3):
 		# generate random graph and convert to custom representation
 		nx_graph = nx.gnm_random_graph(15, 25, directed=True)
-		custom_graph = graph_conv.nx2custom(nx_graph)
+		custom_graph = g.nx2custom(nx_graph)
 
 		# get strong connected components
 		print "Strongly connected components by Tarjan's algorithm:"

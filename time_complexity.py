@@ -6,10 +6,10 @@ import time
 import multiprocessing
 import sys
 import networkx as nx
-import graph_conv
 import gc
 from math import sqrt, ceil
 
+import graph as g
 from graph import Graph
 import tarjan
 import gabow
@@ -94,10 +94,10 @@ def measure_one(graph_size):
 		print('[density {}: {} vertices, {} edges]\t'.format(density, nx_graph.number_of_nodes(), nx_graph.number_of_edges()), end='')
 
 		if args.algorithm == 'tarjan':
-			custom_graph = graph_conv.nx2custom(nx_graph)
+			custom_graph = g.nx2custom(nx_graph)
 			results.append(min(time_one(run_times, run_number, tarjan.strongly_connected_components, custom_graph)))
 		elif args.algorithm == 'gabow':
-			custom_graph = graph_conv.nx2custom(nx_graph)
+			custom_graph = g.nx2custom(nx_graph)
 			results.append(min(time_one(run_times, run_number, gabow.strongly_connected_components, custom_graph)))
 		elif args.algorithm == 'tarjan_nx':
 			results.append(min(time_one(run_times, run_number, nx.strongly_connected_components, nx_graph)))
@@ -124,7 +124,7 @@ def measure_all(graph_size):
 	print('graph size = {}: {} vertices, {} edges'.format(graph_size, vertices, edges))
 
 	nx_graph = nx.gnm_random_graph(vertices, edges, directed=True)
-	custom_graph = graph_conv.nx2custom(nx_graph)
+	custom_graph = g.nx2custom(nx_graph)
 
 	#test(nx_graph, custom_graph)
 
