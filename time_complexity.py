@@ -8,6 +8,10 @@ import sys
 import networkx as nx
 import gc
 from math import sqrt, ceil
+import psutil
+import os
+import csv
+import itertools
 
 import graph as g
 from graph import Graph
@@ -27,42 +31,64 @@ def test(nx_g, cm_g):
 	print()
 	print('Kosaraju NX:', [sorted(component) for component in nx.kosaraju_strongly_connected_components(nx_g)])
 
-def time_one(times, number, scc_function, graph):
-	run_times = []
+def stats_one(times, number, scc_function, graph):
+	stats = {
+		"run_times": [],
+		"memory"   : []
+	}
 
 	for t in range(times):
 		#gc.disable()
+		process = psutil.Process(os.getpid())
 		start = time.clock()
 		for i in range(number):
 			for c in scc_function(graph):
 				pass
-		run_times.append(time.clock() - start)
+		stats["run_times"].append(time.clock() - start)
+		stats["memory"].append(process.memory_info_ex().rss)
 		#gc.enable()
-	return run_times
+	return stats
 
-def timeit(times, number, nx_g, cm_g):
-	results = ([], [], [])
+def statsit(times, number, nx_g, cm_g):
+	stats = {
+		"tarjan" : {
+			"run_times" : [],
+			"memory"       : []
+		},
+		"gabow" : {
+			"run_times" : [],
+			"memory"       : []
+		},
+		"nx" : {
+			"run_times" : [],
+			"memory"       : []
+		}
+	}
 	#results = ([], [], [], [])
 
 	for t in range(times):
 		#gc.disable()
+		process = psutil.Process(os.getpid())
 		start = time.clock()
 		for i in range(number):
 			for component in tarjan.strongly_connected_components(cm_g):
 				pass
-		results[0].append(time.clock() - start)
+		stats['tarjan']['run_times'].append(time.clock() - start)
+		stats['tarjan']['memory'].append(process.memory_info_ex().rss)
 
 		start = time.clock()
 		for i in range(number):
 			for component in gabow.strongly_connected_components(cm_g):
 				pass
-		results[1].append(time.clock() - start)
+		stats['gabow']['run_times'].append(time.clock() - start)
+		stats['gabow']['memory'].append(process.memory_info_ex().rss)
 
 		start = time.clock()
 		for i in range(number):
 			for component in nx.strongly_connected_components(nx_g):
 				pass
-		results[2].append(time.clock() - start)
+		stats['nx']['run_times'].append(time.clock() - start)
+		stats["nx"]["memory"].append(process.memory_info_ex().rss)
 
 		#start = time.clock()
 		#for i in range(number):
@@ -71,7 +97,7 @@ def timeit(times, number, nx_g, cm_g):
 		#end = time.clock()
 		#results[3].append(end - start)
 		#gc.enable()
-	return results
+	return stats
 
 def measure_one(graph_size):
 	global args
@@ -81,7 +107,7 @@ def measure_one(graph_size):
 
 	print('graph size {}: '.format(graph_size), end='')
 	for density in args.densities:
-	 	if density == 1.0: #complete graph
+		if density == 1.0: #complete graph
 			vertices = int(ceil(sqrt(graph_size)))
 		else:
 			vertices = int(round(graph_size * (1.0 - density)))
@@ -89,27 +115,30 @@ def measure_one(graph_size):
 
 		nx_graph = nx.gnm_random_graph(vertices, edges, directed=True)
 		if nx_graph.number_of_nodes() + nx_graph.number_of_edges() != graph_size:
-			results.append(float('nan'))
+			results.append({"run_times":float('nan'), "memory":float('nan')})
 			continue
 		print('[density {}: {} vertices, {} edges]\t'.format(density, nx_graph.number_of_nodes(), nx_graph.number_of_edges()), end='')
 
 		if args.algorithm == 'tarjan':
 			custom_graph = g.nx2custom(nx_graph)
-			results.append(min(time_one(run_times, run_number, tarjan.strongly_connected_components, custom_graph)))
+			stats = stats_one(run_times, run_number, tarjan.strongly_connected_components, custom_graph)
 		elif args.algorithm == 'gabow':
 			custom_graph = g.nx2custom(nx_graph)
-			results.append(min(time_one(run_times, run_number, gabow.strongly_connected_components, custom_graph)))
+			stats = stats_one(run_times, run_number, gabow.strongly_connected_components, custom_graph)
 		elif args.algorithm == 'tarjan_nx':
-			results.append(min(time_one(run_times, run_number, nx.strongly_connected_components, nx_graph)))
+			stats = stats_one(run_times, run_number, nx.strongly_connected_components, nx_graph)
 		elif args.algorithm == 'kosaraju_nx':
-			results.append(min(time_one(run_times, run_number, nx.kosaraju_strongly_connected_components, nx_graph)))
+			stats = stats_one(run_times, run_number, nx.kosaraju_strongly_connected_components, nx_graph)
+
+		results.append((round(min(stats['run_times']),3), round(min(stats['memory']) / float(2**20),3)))
 
 	print()
-	with open(args.output, 'a') as f:
-		print(graph_size, '\t', end = '', file = f)
-		for density_res in results:
-			print(density_res, '\t', end = '', file = f)
-		print(file = f)
+
+	with open(args.output, 'a') as csvfile:
+		writer = csv.writer(csvfile, delimiter=';')
+		row = [graph_size] + list(itertools.chain(*results))
+		writer.writerow(row)
+
 
 def measure_all(graph_size):
 	global args
@@ -128,12 +157,15 @@ def measure_all(graph_size):
 
 	#test(nx_graph, custom_graph)
 
-	res_tuple = timeit(run_times, run_number, nx_graph, custom_graph)
-	with open(args.output, 'a') as f:
-		print(graph_size, '\t', end = '', file = f)
-		for alg_res in res_tuple:
-			print(min(alg_res), '\t', end='', file = f)
-		print(file = f)
+	stats = statsit(run_times, run_number, nx_graph, custom_graph)
+	with open(args.output, 'a') as csvfile:
+		writer = csv.writer(csvfile, delimiter=';')
+		tarjans_mins = [round(min(stats['tarjan']['run_times']),3), round(min(stats['tarjan']['memory']) / float(2**20),3)]
+		gabows_mins = [round(min(stats['gabow']['run_times']),3), round(min(stats['gabow']['memory']) / float(2**20),3)]
+		nx_mins = [round(min(stats['nx']['run_times']),3), round(min(stats['nx']['memory']) / float(2**20),3)]
+		row = [graph_size] + tarjans_mins + gabows_mins + nx_mins
+		writer.writerow(row)
+
 
 if __name__ == '__main__':
 	#sys.setrecursionlimit(10000)
@@ -179,17 +211,25 @@ if __name__ == '__main__':
 				print('error: bad density', d, file = sys.stderr)
 				exit(1)
 
-		with open(args.output, 'w') as f:
-			print('|V|+|E|\t', end = '', file = f)
-			for density in args.densities:
-				print(density, '\t', end = '', file = f)
-			print(file = f)
+		with open(args.output, 'w') as csvfile:
+			writer = csv.writer(csvfile, delimiter=';')
+			running_time_labels = [''.join((str(d),'_run-time')) for d in args.densities ]
+			memory_labels = [''.join((str(d),'_memory(MB)')) for d in args.densities ]
+			row = ['|V|+|E|'] + list(itertools.chain(*zip(running_time_labels,memory_labels)))
+			writer.writerow(row)
+
 	elif args.func == measure_all:
 		if args.density < 0.0 or args.density > 1:
 			print('error: bad density', args.density, file = sys.stderr)
 			exit(1)
-		with open(args.output, 'w') as f:
-			print('|V|+|E|\tTarjan\'s\tGabow\'s\tNX_Tarjan\'s\t', file = f)
+
+		names = ['Tarjan\'s', 'Gabow\'s', 'NX_Tarjan\'s']
+		with open(args.output, 'w') as csvfile:
+			writer = csv.writer(csvfile, delimiter=';')
+			running_time_labels = [''.join((str(d),'_run-time')) for d in names ]
+			memory_labels = [''.join((str(d),'_memory(MB)')) for d in names ]
+			row = ['|V|+|E|'] + list(itertools.chain(*zip(running_time_labels,memory_labels)))
+			writer.writerow(row)
 			#print('|V|+|E|\tTarjan\'s\tGabow\'s\tNX_Tarjan\'s\tNX_Kosaraju\'s')
 	
 	#parallel run
