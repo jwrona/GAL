@@ -167,7 +167,7 @@ if __name__ == '__main__':
 	parser_single.add_argument('--algorithm', type=str, choices=alg_setting.keys(), required=True,
 		help='Algorithm to measure.')
 	parser_single.add_argument('--densities', type=str, default='0.0,0.5,1.0',
-		help='Graph densities. Comma separated real numbers from 0.0 to 1.0. Default value are \'0.0,0.5,1.0\'')
+		help='Graph densities. Comma separated real numbers from 0.0 to 1.0. Default values are \'0.0,0.5,1.0\'')
 	parser_single.set_defaults(func=measure_single)
 	
 	# create the parser for the "multi" command
