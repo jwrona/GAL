@@ -1,10 +1,13 @@
 #author: Jan Wrona
 #email: <xwrona00@stud.fit.vutbr.cz>
 
+#paths
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EXEC="${DIR}/scc_analysis.py"
+
 #global settings
-EXEC="./scc_analysis.py"
 REPETITIONS=3
-MULTIPLICATION=1000
+MULTIPLICATION=100
 
 #single settings
 SINGLE_ALGORITHMS=("tarjan" "gabow" "tarjan_nx" "kosaraju_nx")

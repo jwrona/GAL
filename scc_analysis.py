@@ -236,5 +236,8 @@ if __name__ == '__main__':
 	elif args.cpus == -1: #use half of the cpus
 		args.cpus = multiprocessing.cpu_count() / 2
 
+	#garbage collector causes problem in space complexity measurement
+	#it is necessary to turn it off completely when measuring memory
+	#gc.disable()
 	pool = multiprocessing.Pool(args.cpus)
 	pool.map(args.func, range(start, limit, step))
