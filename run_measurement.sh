@@ -7,7 +7,7 @@ EXEC="${DIR}/scc_analysis.py"
 
 #global settings
 REPETITIONS=3
-MULTIPLICATION=100
+MULTIPLICATION=1000
 
 #single settings
 SINGLE_ALGORITHMS=("tarjan" "gabow" "tarjan_nx" "kosaraju_nx")
