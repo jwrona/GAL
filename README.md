@@ -1,4 +1,3 @@
-GAL
-===
+# GAL
 
-school project for Graph algorithms
+Team school project for the Graph algorithms course.
